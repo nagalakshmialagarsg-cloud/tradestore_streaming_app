@@ -2,9 +2,9 @@ name: CodeQL Analysis
 
 on:
   push:
-    branches: [ feature ]
+    branches: [ feature/add-tradestore-streaming-app ]
   pull_request:
-    branches: [ feature ]
+    branches: [ feature/add-tradestore-streaming-app ]
   schedule:
     - cron: '0 2 * * 1' # weekly scan on Mondays at 2AM
 
