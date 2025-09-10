@@ -2,9 +2,13 @@ name: CI Pipeline – tradestore_streaming_app
 
 on:
   push:
-    branches: [ feature/add-tradestore-streaming-app ]
+    branches: 
+            - main
+            - feature/add-tradestore-streaming-app
   pull_request:
-    branches: [ feature/add-tradestore-streaming-app ]
+    branches: 
+            - main
+            - feature/add-tradestore-streaming-app
 
 jobs:
   build:
