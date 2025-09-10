@@ -4,7 +4,7 @@
 This is the Github repository to store the code for "tradestore_streaming_app" - a springboot application (spring.tradestore.stream.backend.app) posted under Github repository "tradestore_streaming_app".
 This application is integrated with the following tools and technologies,
 
-Technology Stack used for this project:
+**Technology Stack used for this project:**
   a) Springboot version : 3.5.5 [running on the port: 8080]
   b) Java version: 17
   c) Apache Kafka : 2.13 (uses zookeeper version: 3.6.3) - for streaming as (pub/sub) messaging platform.
