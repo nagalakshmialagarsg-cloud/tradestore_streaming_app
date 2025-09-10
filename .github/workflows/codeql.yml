@@ -3,12 +3,12 @@ name: CodeQL Analysis
 on:
   push:
     branches: 
-            - main
-            - 'feature/add-tradestore-streaming-app'
+      - main
+      - 'feature/add-tradestore-streaming-app'
   pull_request:
     branches: 
-            - main
-            - 'feature/add-tradestore-streaming-app'
+      - main
+      - 'feature/add-tradestore-streaming-app'
   schedule:
     - cron: '0 2 * * 1' # weekly scan on Mondays at 2AM
 
@@ -38,6 +38,7 @@ jobs:
 
       - name: Build with Maven
         run: mvn -B clean install -DskipTests
+        working-directory: spring.tradestore.stream.backend.app
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
