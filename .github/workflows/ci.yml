@@ -67,6 +67,7 @@ jobs:
 
       - name: Build & run tests with Maven
         run: mvn -B clean verify
+		working-directory: spring.tradestore.stream.backend.app
 		
 	   # commented in workflow as I am starting zookeeper and kafka servers manually 
       #- name: Tear down Kafka & Zookeeper
