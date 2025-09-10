@@ -25,6 +25,7 @@ import com.tradestore.stream.app.entities.mongo.documents.TradeStoreDocument;
 import com.tradestore.stream.app.entities.mongo.repositories.TradeStoreMongoRepository;
 import com.tradestore.stream.app.entities.repositories.TradeRepository;
 
+// This is the regression test suite to test happy path and negative scenarios.
 public class TradeEventConsumerTest {
 	@Mock
     private TradeRepository tradeRepository;
@@ -40,6 +41,7 @@ public class TradeEventConsumerTest {
         MockitoAnnotations.openMocks(this);
     }
 
+    //This method creates the trade
     private Trade createTrade(String tradeId, String version, Date maturityDate, String expiry) {
         Trade trade = new Trade();
         trade.setTradeId(tradeId);
@@ -52,12 +54,14 @@ public class TradeEventConsumerTest {
         return trade;
     }
 
+    //creates the trade event
     private TradeEvent createTradeEvent(Trade trade) {
         TradeEvent event = new TradeEvent();
         event.setTrade(trade);
         return event;
     }
 
+    //creates table entity DTOs to set values to persist values into in-memory H2 db using Mockito
     private TradeEntity createTradeEntity(String tradeId, String version, Date maturityDate, String expiry) {
         TradeIdentity id = new TradeIdentity();
         id.setTradeId(tradeId);
@@ -73,6 +77,7 @@ public class TradeEventConsumerTest {
         return entity;
     }
 
+    //This is the test method to verify if the trade is persisted successfully in both MySQL and MongoDB
     @Test
     void testConsume_SuccessfulSave() {
         Date futureDate = new Date(System.currentTimeMillis() + 10000000);
@@ -89,6 +94,7 @@ public class TradeEventConsumerTest {
         verify(tradeMongoRepository).save(any(TradeStoreDocument.class));
     }
 
+    //This test is to validate the trade to reject the null trade
     @Test
     void testConsume_RejectsNullTrade() {
         TradeEvent event = new TradeEvent();
@@ -100,6 +106,7 @@ public class TradeEventConsumerTest {
         verifyNoInteractions(tradeMongoRepository);
     }
 
+    //This test method is to update expiry flag to 'Y' if maturity date surpassed the date for the given trade.
     @Test
     void testUpdateExpiryFlag_SetsExpiryY_WhenMaturityPassed() {
         Date oldMaturity = new Date(System.currentTimeMillis() - 1000000);
@@ -110,13 +117,13 @@ public class TradeEventConsumerTest {
 
         when(tradeRepository.findByTradeIdentityTradeId("T1")).thenReturn(Arrays.asList(entity));
 
-        // Use reflection or make updateExpiryFlag package-private for direct call if needed
         consumer.consume(createTradeEvent(trade));
 
         // Should set expiry "Y" because incoming maturityDate is after DB maturityDate
         assertEquals("Y", entity.getExpiry());
     }
 
+    //This test method is to test if the incoming trade version is lower than the version persisted in database for the given trade.
     @Test
     void testValidateVersion_ThrowsForLowerVersion() {
         Trade trade = createTrade("T1", "1", new Date(System.currentTimeMillis() + 1000000), "N");
@@ -130,6 +137,7 @@ public class TradeEventConsumerTest {
         assertTrue(ex.getMessage().contains("Rejected trade"));
     }
 
+    //This test is to replace the trade in table if same trade comes from kafka topic.
     @Test
     void testValidateVersion_ReplacesExisting() {
         Trade trade = createTrade("T1", "1", new Date(System.currentTimeMillis() + 1000000), "N");
@@ -143,6 +151,7 @@ public class TradeEventConsumerTest {
         verify(tradeMongoRepository).save(any(TradeStoreDocument.class));
     }
 
+   //This test method is validating if maturity date is null. 
     @Test
     void testValidateMaturityDate_ThrowsForNullDate() {
         Trade trade = createTrade("T1", "1", null, "N");
