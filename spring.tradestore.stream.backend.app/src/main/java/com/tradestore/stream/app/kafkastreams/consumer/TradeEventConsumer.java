@@ -12,6 +12,8 @@ import com.tradestore.stream.app.dto.Trade;
 import com.tradestore.stream.app.dto.TradeEvent;
 import com.tradestore.stream.app.entities.TradeEntity;
 import com.tradestore.stream.app.entities.TradeIdentity;
+import com.tradestore.stream.app.entities.mongo.documents.TradeStoreDocument;
+import com.tradestore.stream.app.entities.mongo.repositories.TradeStoreMongoRepository;
 import com.tradestore.stream.app.entities.repositories.TradeRepository;
 
 @Service
@@ -19,10 +21,13 @@ public class TradeEventConsumer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TradeEventConsumer.class);
 
-    private final TradeRepository tradeRepository;
+    private final TradeRepository tradeRepository; //for MySQL database
+    
+    private final TradeStoreMongoRepository tradeMongoRepository; //for NoSQL MongoDB
 
-    public TradeEventConsumer(TradeRepository tradeRepository) {
+    public TradeEventConsumer(TradeRepository tradeRepository, TradeStoreMongoRepository tradeMongoRepository) {
         this.tradeRepository = tradeRepository;
+        this.tradeMongoRepository = tradeMongoRepository;
     }
 
     @KafkaListener(topics = "${spring.kafka.topic.name}", groupId = "${spring.kafka.consumer.group-id}")
@@ -35,8 +40,10 @@ public class TradeEventConsumer {
             return;
         }
 
-        // Map DTO to entity
+        // Map DTO to entity - for SQL database (MySQL)
         TradeEntity tradeEntity = mapToEntity(tradeDto);
+        
+        
 
         try {
             
@@ -49,8 +56,13 @@ public class TradeEventConsumer {
             // Validation Rule #3: Trade Maturity date validation
             validateMaturityDate(tradeDto);
 
-            // Save to DB
+            // Save to DB - MySQL database
             tradeRepository.save(tradeEntity);
+            
+            //for NoSQL MongoDB
+            TradeStoreDocument mongoDoc = mapToDocument(tradeEntity);
+            tradeMongoRepository.save(mongoDoc);
+            
             LOGGER.info("Trade {} saved successfully", tradeDto.getTradeId());
 
         } catch (IllegalArgumentException ex) {
@@ -162,4 +174,19 @@ public class TradeEventConsumer {
 
         return entity;
     }
+    
+    //Map to NoSQL MongoDB 
+    private TradeStoreDocument mapToDocument(TradeEntity entity) {
+        TradeStoreDocument doc = new TradeStoreDocument();
+        doc.setTradeId(entity.getTradeIdentity().getTradeId());
+        doc.setVersion(entity.getTradeIdentity().getVersion());
+        doc.setCounterpartyId(entity.getCounterpartyId());
+        doc.setBookId(entity.getBookId());
+        doc.setMaturityDate(entity.getMaturityDate());
+        doc.setCreatedDate(entity.getCreatedDate());
+        doc.setExpiry(entity.getExpiry());        
+        return doc;
+    }
+
+    
 }
