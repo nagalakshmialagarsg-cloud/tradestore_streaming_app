@@ -1,0 +1,22 @@
+@startuml
+actor Kafka as "Kafka Broker"
+participant "TradeEventConsumer" as Consumer
+participant "TradeRepository" as MySQLRepo
+participant "TradeStoreMongoRepository" as MongoRepo
+
+Kafka -> Consumer : consume(tradeEvent)
+
+activate Consumer
+
+Consumer -> Consumer : mapToEntity(trade)
+Consumer -> MySQLRepo : findByTradeIdentityTradeId(tradeId)
+Consumer -> Consumer : updateExpiryFlag(trade, entity)
+Consumer -> Consumer : validateVersion(trade, entity)
+Consumer -> Consumer : validateMaturityDate(trade)
+Consumer -> MySQLRepo : save(tradeEntity)
+Consumer -> Consumer : mapToDocument(entity)
+Consumer -> MongoRepo : save(mongoDoc)
+
+deactivate Consumer
+
+@enduml

@@ -1,0 +1,69 @@
+@startuml
+
+class TradeEventConsumer {
+    - tradeRepository : TradeRepository
+    - tradeMongoRepository : TradeStoreMongoRepository
+    + consume(tradeEvent : TradeEvent) : void
+    - updateExpiryFlag(trade : Trade, entity : TradeEntity) : void
+    - validateVersion(trade : Trade, entity : TradeEntity) : void
+    - validateMaturityDate(trade : Trade) : void
+    - mapToEntity(trade : Trade) : TradeEntity
+    - mapToDocument(entity : TradeEntity) : TradeStoreDocument
+}
+
+class TradeRepository {
+    + findByTradeIdentityTradeId(tradeId : String) : List<TradeEntity>
+    + save(entity : TradeEntity) : void
+}
+
+class TradeStoreMongoRepository {
+    + save(doc : TradeStoreDocument) : void
+}
+
+class TradeEvent {
+    + getTrade() : Trade
+}
+
+class Trade {
+    + tradeId : String
+    + version : String
+    + counterpartyId : String
+    + bookId : String
+    + maturityDate : Date
+    + createdDate : Date
+    + expiry : String
+}
+
+class TradeEntity {
+    + tradeIdentity : TradeIdentity
+    + counterpartyId : String
+    + bookId : String
+    + maturityDate : Date
+    + createdDate : Date
+    + expiry : String
+}
+
+class TradeIdentity {
+    + tradeId : String
+    + version : String
+}
+
+class TradeStoreDocument {
+    + tradeId : String
+    + version : String
+    + counterpartyId : String
+    + bookId : String
+    + maturityDate : Date
+    + createdDate : Date
+    + expiry : String
+}
+
+TradeEventConsumer --> TradeRepository
+TradeEventConsumer --> TradeStoreMongoRepository
+TradeEventConsumer --> TradeEvent
+TradeEvent --> Trade
+TradeEventConsumer --> TradeEntity
+TradeEventConsumer --> TradeStoreDocument
+TradeEntity --> TradeIdentity
+
+@enduml

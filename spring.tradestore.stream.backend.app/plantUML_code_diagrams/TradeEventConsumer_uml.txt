@@ -1,0 +1,10 @@
+class TradeEventConsumer {
+    - tradeRepository : TradeRepository
+    - tradeMongoRepository : TradeStoreMongoRepository
+    + consume(tradeEvent : TradeEvent) : void
+    - updateExpiryFlag(trade : Trade, entity : TradeEntity) : void
+    - validateVersion(trade : Trade, entity : TradeEntity) : void
+    - validateMaturityDate(trade : Trade) : void
+    - mapToEntity(trade : Trade) : TradeEntity
+    - mapToDocument(entity : TradeEntity) : TradeStoreDocument
+}
