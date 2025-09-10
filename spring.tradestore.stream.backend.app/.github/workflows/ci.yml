@@ -1,0 +1,70 @@
+name: CI Pipeline – tradestore_streaming_app
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout tradestore_streaming_app
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          lfs: true
+
+      - name: Set up Java 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Maven local repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Start Zookeeper container
+        run: |
+          docker run -d --name zookeeper -p 2181:2181 `
+            -e ZOOKEEPER_CLIENT_PORT=2181 `
+            -e ZOOKEEPER_TICK_TIME=2000 `
+            confluentinc/cp-zookeeper:7.6.1
+
+      - name: Start Kafka container
+        run: |
+          docker run -d --name kafka -p 9092:9092 `
+            -e KAFKA_BROKER_ID=1 `
+            -e KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181 `
+            -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 `
+            -e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 `
+            confluentinc/cp-kafka:7.6.1
+
+      - name: Wait for Kafka to become available
+        run: |
+          echo "Waiting for Kafka..."
+          for ($i = 0; $i -lt 20; $i++) {
+            if (Test-NetConnection localhost -Port 9092 -InformationLevel Quiet) {
+              echo "Kafka is ready!"
+              break
+            }
+            echo "Retry delay $i..."
+            Start-Sleep -Seconds 5
+          }
+
+      - name: Build & run tests with Maven
+        run: mvn -B clean verify
+
+      - name: Tear down Kafka & Zookeeper
+        if: always()
+        run: |
+          docker stop kafka zookeeper
+          docker rm kafka zookeeper
